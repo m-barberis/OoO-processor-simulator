@@ -19,7 +19,25 @@ int main() {
     
     // Vector to hold the simulation log (JSON states for each cycle)
     std::vector<json> simulationLog;
+
+    simulationLog.push_back(dumpStateToJson(state)); // Log the initial state before starting the simulation
     
     // Main simulation loop 
+    // the loop for cycle-by-cycle iterations.
+    while(!noInstruction() && !activeListIsEmpty()){
+    
+    // do propagation
+    // if you have multiple modules, propagate each of them
+    propagate();
+    // advance clock, start next cycle
+    latch();
+
+    // dump the state
+    simulationLog.push_back(dumpStateToJson(state));
+
+    }
+    // save the output JSON log
+    saveSimulationLog(simulationLog, "output.json");
+
 
 }
