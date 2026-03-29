@@ -74,44 +74,44 @@ ParsedInstruction decodeInstructionString(std::string inst_str) {
 json dumpStateToJson(const SystemState& state) {
     json j;
     
-    j["PC"] = state.PC;                                                
-    j["PhysicalRegisterFile"] = state.PhysicalRegisterFile;            
-    j["DecodedPCs"] = state.DecodedPCs;                                
-    j["Exception"] = state.Exception;                                  
-    j["ExceptionPC"] = state.ExceptionPC;                              
-    j["RegisterMapTable"] = state.RegisterMapTable;                    
-    j["FreeList"] = state.FreeList;                                    
-    j["BusyBitTable"] = state.BusyBitTable;                            
+    j["PC"] = state.PC;
+    j["PhysicalRegisterFile"] = state.PhysicalRegisterFile;
+    j["DecodedPCs"] = state.DecodedPCs;
+    j["Exception"] = state.Exception;
+    j["ExceptionPC"] = state.ExceptionPC;
+    j["RegisterMapTable"] = state.RegisterMapTable;
+    j["FreeList"] = state.FreeList;
+    j["BusyBitTable"] = state.BusyBitTable;
     
     // We manually construct the JSON array for the active list entries 
     json activeListJson = json::array();
     for (const auto& entry : state.ActiveList) {
         activeListJson.push_back({
-            {"Done", entry.Done},                                     
-            {"Exception", entry.Exception},                           
-            {"LogicalDestination", entry.LogicalDestination},         
-            {"OldDestination", entry.OldDestination},                 
-            {"PC", entry.PC}                                          
+            {"Done", entry.Done},
+            {"Exception", entry.Exception},
+            {"LogicalDestination", entry.LogicalDestination},
+            {"OldDestination", entry.OldDestination},
+            {"PC", entry.PC}
         });
     }
-    j["ActiveList"] = activeListJson;                                 
+    j["ActiveList"] = activeListJson;
     
     // We manually construct the JSON array for the integer queue entries 
     json integerQueueJson = json::array();
     for (const auto& entry : state.IntegerQueue) {
         integerQueueJson.push_back({
-            {"DestRegister", entry.DestRegister},                     
-            {"OpAIsReady", entry.OpAIsReady},                         
-            {"OpARegTag", entry.OpARegTag},                           
-            {"OpAValue", entry.OpAValue},                             
-            {"OpBIsReady", entry.OpBIsReady},                         
-            {"OpBRegTag", entry.OpBRegTag},                           
-            {"OpBValue", entry.OpBValue},                             
-            {"OpCode", entry.OpCode},                                 
-            {"PC", entry.PC}                                           
+            {"DestRegister", entry.DestRegister},
+            {"OpAIsReady", entry.OpAIsReady},
+            {"OpARegTag", entry.OpARegTag},
+            {"OpAValue", entry.OpAValue},
+            {"OpBIsReady", entry.OpBIsReady},
+            {"OpBRegTag", entry.OpBRegTag},
+            {"OpBValue", entry.OpBValue},
+            {"OpCode", entry.OpCode},
+            {"PC", entry.PC}
         });
     }
-    j["IntegerQueue"] = integerQueueJson;                              
+    j["IntegerQueue"] = integerQueueJson;
     
     return j;
 }
