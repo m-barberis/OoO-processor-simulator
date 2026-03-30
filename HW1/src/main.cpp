@@ -25,13 +25,13 @@ int main() {
     
     // Main simulation loop 
     // the loop for cycle-by-cycle iterations.
-    while(!noInstruction() && !activeListIsEmpty()){
+    while(!noInstruction(state) && !activeListIsEmpty(state)){
     
     // do propagation
     // if you have multiple modules, propagate each of them
-    propagate();
+    propagate(state);
     // advance clock, start next cycle
-    latch();
+    latch(state);
 
     // dump the state
     simulationLog.push_back(dumpStateToJson(state));

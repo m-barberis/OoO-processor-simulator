@@ -3,10 +3,21 @@
 #include "io_handler.hpp"
 
 void propagate(SystemState& current_state) {
-    // Implementation for propagating state through pipeline stages
-    SystemState next_state = current_state; // Create a copy of the current state to modify for the next cycle
-    commit(current_state, next_state);
+    SystemState next_state = current_state;
+
+    if (current_state.Exception) {
+        // --- EXCEPTION RECOVERY MODE ---
+        handle_exception_recovery(current_state, next_state);
+    } else {
+        // --- NORMAL PIPELINE MODE ---
+        fetch_and_decode(current_state, next_state);
+        rename_and_dispatch(current_state, next_state);
+        issue(current_state, next_state);
+        execute(current_state, next_state);
+        commit(current_state, next_state);
+    }
 }
+
 
 void latch(SystemState& state) {
     // Implementation for advancing clock and latching new state
@@ -29,13 +40,12 @@ void commit(SystemState& current_state, SystemState& next_state) {
 
         ActiveListEntry examined_instruction = current_state.ActiveList[i];
         // Implementation for committing each instruction
-        if (examined_instruction.Done == true) { // Mark the instruction as done in the current state
-
-            instruction_commit(current_state, next_state, examined_instruction, i); // Call the instruction commit function to handle the specific commit logic for the instruction
-        }
-        else if (examined_instruction.Exception == true) { // Handle exceptions if any
+        if (examined_instruction.Done == true && examined_instruction.Exception == true) { // Handle exceptions if any
             instruction_exception(current_state, next_state, examined_instruction, i); // Processor enters exception mode in the next cycle and the PC is set to 10000 to jump to the exception handler
             break; // Stop committing further instructions if an exception is encountered
+        }
+        else if (examined_instruction.Done == true) { // Mark the instruction as done in the current state
+            instruction_commit(current_state, next_state, examined_instruction, i); // Call the instruction commit function to handle the specific commit logic for the instruction
         }
         else {
             break; // Stop committing further instructions if the current instruction is not done
@@ -45,11 +55,8 @@ void commit(SystemState& current_state, SystemState& next_state) {
 
 void instruction_commit(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction, int i) {
     // Implementation for committing instructions
-    next_state.BusyBitTable[current_state.RegisterMapTable[examined_instruction.LogicalDestination]] = false; // Clear the busy bit for the physical register
-    next_state.FreeList.push_back(current_state.RegisterMapTable[examined_instruction.LogicalDestination]); // Add the physical register back to the Free List
-    next_state.RegisterMapTable[examined_instruction.LogicalDestination] = examined_instruction.OldDestination; // Update the Register Map Table to point back to the old physical register
-    
-
+    // Only free the old destination physical register
+    next_state.FreeList.push_back(examined_instruction.OldDestination);
     next_state.ActiveList.erase(next_state.ActiveList.begin()); // Remove the instruction from the Active List in the next state
 
 }
@@ -57,7 +64,5 @@ void instruction_commit(SystemState& current_state, SystemState& next_state, Act
 void instruction_exception(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction, int i) {
     next_state.Exception = true; // Set the exception flag in the next state
     next_state.ExceptionPC = examined_instruction.PC; // Set the Exception PC to the PC of the instruction that caused the exception
-    next_state.PC = 10000; // PC set to 10000 to indicate that the processor should jump to the exception handler
-    //TODO : Clear the Active List and Integer Queue in the next state to flush the pipeline
-    // Registers go back to the free list in opposite order of allocation, so we need to iterate through the Active List in reverse order to free the physical registers correctly
+    //TODO: We have to notify the fetch stage to stop fetching new instructions and to set the PC to 10000 to jump to the exception handler. This can be done by setting a flag in the next state that the fetch stage will check in the next cycle.
 }
