@@ -66,3 +66,23 @@ void instruction_exception(SystemState& current_state, SystemState& next_state, 
     next_state.ExceptionPC = examined_instruction.PC; // Set the Exception PC to the PC of the instruction that caused the exception
     //TODO: We have to notify the fetch stage to stop fetching new instructions and to set the PC to 10000 to jump to the exception handler. This can be done by setting a flag in the next state that the fetch stage will check in the next cycle.
 }
+
+void handle_exception_recovery(SystemState& current_state, SystemState& next_state) {
+    // Implementation for exception recovery mode
+}
+
+void fetch_and_decode(SystemState& current_state, SystemState& next_state) {
+    // Implementation for fetch and decode stage
+}
+
+void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
+    // Implementation for rename and dispatch stage
+}
+
+void issue(SystemState& current_state, SystemState& next_state) {
+    // Implementation for issue stage
+}
+
+void execute(SystemState& current_state, SystemState& next_state) {
+    // Implementation for execute stage
+}
