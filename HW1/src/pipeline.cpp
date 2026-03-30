@@ -34,8 +34,11 @@ void commit(SystemState& current_state, SystemState& next_state) {
             instruction_commit(current_state, next_state, examined_instruction, i); // Call the instruction commit function to handle the specific commit logic for the instruction
         }
         else if (examined_instruction.Exception == true) { // Handle exceptions if any
-            instruction_exception(current_state, next_state, examined_instruction, i); // Call the instruction exception function to handle the specific logic for exceptions
+            instruction_exception(current_state, next_state, examined_instruction, i); // Processor enters exception mode in the next cycle and the PC is set to 10000 to jump to the exception handler
             break; // Stop committing further instructions if an exception is encountered
+        }
+        else {
+            break; // Stop committing further instructions if the current instruction is not done
         }
     }
 }
@@ -47,8 +50,7 @@ void instruction_commit(SystemState& current_state, SystemState& next_state, Act
     next_state.RegisterMapTable[examined_instruction.LogicalDestination] = examined_instruction.OldDestination; // Update the Register Map Table to point back to the old physical register
     
 
-    next_state.ActiveList.erase(next_state.ActiveList.begin() + i); // Remove the instruction from the Active List in the next state
-    next_state.PC = examined_instruction.PC + 1; // Increment the PC to point to the next instruction
+    next_state.ActiveList.erase(next_state.ActiveList.begin()); // Remove the instruction from the Active List in the next state
 
 }
 
@@ -56,4 +58,6 @@ void instruction_exception(SystemState& current_state, SystemState& next_state, 
     next_state.Exception = true; // Set the exception flag in the next state
     next_state.ExceptionPC = examined_instruction.PC; // Set the Exception PC to the PC of the instruction that caused the exception
     next_state.PC = 10000; // PC set to 10000 to indicate that the processor should jump to the exception handler
+    //TODO : Clear the Active List and Integer Queue in the next state to flush the pipeline
+    // Registers go back to the free list in opposite order of allocation, so we need to iterate through the Active List in reverse order to free the physical registers correctly
 }
