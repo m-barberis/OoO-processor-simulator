@@ -1,6 +1,7 @@
 #pragma once
 #include "state.hpp"
 #include "io_handler.hpp"
+#include "pipeline.hpp"
 #include <vector>
 #include <string>
 
