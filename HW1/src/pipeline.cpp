@@ -9,12 +9,12 @@ void propagate(SystemState& current_state) {
         // Exception recovery mode
         handle_exception_recovery(current_state, next_state);
     } else {
-        // Normal mode
-        fetch_and_decode(current_state, next_state);
-        rename_and_dispatch(current_state, next_state);
-        issue(current_state, next_state);
-        execute(current_state, next_state);
+        // Normal mode (evaluate in reverse order to model combinational backward paths)
         commit(current_state, next_state);
+        execute(current_state, next_state);
+        issue(current_state, next_state);
+        rename_and_dispatch(current_state, next_state);
+        fetch_and_decode(current_state, next_state);
     }
 }
 
