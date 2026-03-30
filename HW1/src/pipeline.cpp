@@ -6,10 +6,10 @@ void propagate(SystemState& current_state) {
     SystemState next_state = current_state;
 
     if (current_state.Exception) {
-        // --- EXCEPTION RECOVERY MODE ---
+        // Exception recovery mode
         handle_exception_recovery(current_state, next_state);
     } else {
-        // --- NORMAL PIPELINE MODE ---
+        // Normal mode
         fetch_and_decode(current_state, next_state);
         rename_and_dispatch(current_state, next_state);
         issue(current_state, next_state);
