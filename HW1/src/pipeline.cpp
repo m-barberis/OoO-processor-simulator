@@ -42,14 +42,18 @@ void commit(SystemState& current_state, SystemState& next_state) {
 
 void instruction_commit(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction, int i) {
     // Implementation for committing instructions
-    current_state.BusyBitTable[current_state.RegisterMapTable[examined_instruction.LogicalDestination]] = false; // Clear the busy bit for the physical register
-    current_state.RegisterMapTable[examined_instruction.LogicalDestination] = examined_instruction.OldDestination; // Update the Register Map Table to point back to the old physical register
+    next_state.BusyBitTable[current_state.RegisterMapTable[examined_instruction.LogicalDestination]] = false; // Clear the busy bit for the physical register
+    next_state.FreeList.push_back(current_state.RegisterMapTable[examined_instruction.LogicalDestination]); // Add the physical register back to the Free List
+    next_state.RegisterMapTable[examined_instruction.LogicalDestination] = examined_instruction.OldDestination; // Update the Register Map Table to point back to the old physical register
     
+
     next_state.ActiveList.erase(next_state.ActiveList.begin() + i); // Remove the instruction from the Active List in the next state
     next_state.PC = examined_instruction.PC + 1; // Increment the PC to point to the next instruction
 
 }
 
 void instruction_exception(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction, int i) {
-    
+    next_state.Exception = true; // Set the exception flag in the next state
+    next_state.ExceptionPC = examined_instruction.PC; // Set the Exception PC to the PC of the instruction that caused the exception
+    next_state.PC = 10000; // PC set to 10000 to indicate that the processor should jump to the exception handler
 }
