@@ -9,7 +9,7 @@ int main() {
     // Load the program instructions from the input JSON file
     std::vector<std::string> instructionStrings = loadProgram("input.json");
     
-    // Decode the instruction strings into ParsedInstruction structs
+    // Parse the instruction strings into ParsedInstruction structs
     std::vector<ParsedInstruction> instructions;
     for (const auto& inst_str : instructionStrings) {
         instructions.push_back(decodeInstructionString(inst_str));
@@ -17,6 +17,7 @@ int main() {
     
     // Initialize the system state
     SystemState state;
+    state.instructions = instructions; // Store parsed instructions in the system state
     
     // Vector to hold the simulation log (JSON states for each cycle)
     std::vector<json> simulationLog;

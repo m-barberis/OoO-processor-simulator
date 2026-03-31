@@ -85,7 +85,24 @@ void fetch_and_decode(SystemState& current_state, SystemState& next_state) {
     }
     else {
         // Fetch the instruction at the current PC
+        int instructionsToFetch = std::min(4, static_cast<int>(current_state.instructions.size() - current_state.PC)); // Fetch up to 4 instructions    
         
+        for (int i = 0; i < instructionsToFetch; ++i) {
+            ParsedInstruction parsed_instruction = current_state.instructions[current_state.PC + i];
+            IntegerQueueEntry decoded_instruction;
+
+            decoded_instruction.OpCode = parsed_instruction.opcode;
+            decoded_instruction.PC = current_state.PC + i;
+            decoded_instruction.DestRegister = parsed_instruction.dest;
+            decoded_instruction.OpAValue = parsed_instruction.opA;
+
+            if (parsed_instruction.is_addi) {
+                
+            }
+            next_state.IntegerQueue.push_back(decoded_instruction);
+            next_state.DecodedPCs.push_back(current_state.PC + i);
+            next_state.PC++;
+        }
     }
 }
 
