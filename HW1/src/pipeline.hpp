@@ -10,3 +10,14 @@ void latch(SystemState& state); // Function to advance the clock and latch the n
 bool noInstruction(SystemState& state); // Function to check if there are no more instructions to fetch
 bool activeListIsEmpty(SystemState& state); // Function to check if the Active List is empty
 void commit(SystemState& current_state, SystemState& next_state); // Function for the commit stage of the pipeline
+
+// Pipeline stages
+void fetch_and_decode(SystemState& current_state, SystemState& next_state);
+void rename_and_dispatch(SystemState& current_state, SystemState& next_state);
+void issue(SystemState& current_state, SystemState& next_state);
+void execute(SystemState& current_state, SystemState& next_state);
+
+// Helpers
+void handle_exception_recovery(SystemState& current_state, SystemState& next_state);
+void instruction_commit(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction, int i);
+void instruction_exception(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction, int i);

@@ -25,7 +25,7 @@ void latch(SystemState& state) {
 
 bool noInstruction(SystemState& state) {
     // Implementation for checking if there are no more instructions to fetch
-    return state.DecodedPCs.empty();
+    return state.DecodedPCs.empty() && state.PC == state.instructions.size() && activeListIsEmpty(state); //TODO: This is not correct, we should check if there are no more instructions to fetch
 }
 
 bool activeListIsEmpty(SystemState& state) {
@@ -79,17 +79,31 @@ void fetch_and_decode(SystemState& current_state, SystemState& next_state) {
     if (next_state.Exception == true) {
         next_state.PC = 10000; // Set the PC to 10000 to jump to the exception handler
     }
-    else if (backpressure_on == true) {
+    else if (current_state.backpressure_on == true) {
         // Do nothing, wait for the backpressure to be released
     }
     else {
-        // Fetch the instruction at the current PC
-        int instructionsToFetch = std::min(4, static_cast<int>(current_state.instructions.size() - current_state.PC)); // Fetch up to 4 instructions    
-        
-        for (int i = 0; i < instructionsToFetch; ++i) {
-            ParsedInstruction parsed_instruction = current_state.instructions[current_state.PC + i];
-            next_state.PC++;
+        // Fetch up to 4 instructions, bounded by how many can fit in the 4-entry queue
+        int fetchCapacity = 4 - next_state.DecodedInstructionQueue.size();
+        if (fetchCapacity > 0) {
+            int instructionsToFetch = std::min(fetchCapacity, static_cast<int>(current_state.instructions.size() - current_state.PC));
+            for (int i = 0; i < instructionsToFetch; ++i) {
+                ParsedInstruction parsed_instruction = current_state.instructions[current_state.PC + i];
+                
+                DecodedInstruction di;
+                di.PC = current_state.PC + i;
+                di.inst = parsed_instruction;
+                
+                next_state.DecodedInstructionQueue.push_back(di);
+            }
+            next_state.PC += instructionsToFetch;
         }
+    }
+
+    // Always update DecodedPCs to strictly represent the content of DecodedInstructionQueue
+    next_state.DecodedPCs.clear();
+    for (const auto& di : next_state.DecodedInstructionQueue) {
+        next_state.DecodedPCs.push_back(di.PC);
     }
 }
 
@@ -102,24 +116,29 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
         // Do nothing, wait for the backpressure to be released
     }
     else {
-        // Fetch the instruction at the current PC
-        int instructionsToFetch = std::min(4, static_cast<int>(current_state.instructions.size() - current_state.PC)); // Fetch up to 4 instructions    
+        // Dispatch up to 4 instructions from the Decoded Instruction Queue
+        int instructionsToDispatch = std::min(4, static_cast<int>(current_state.DecodedInstructionQueue.size()));
         
-        for (int i = 0; i < instructionsToFetch; ++i) {
-            ParsedInstruction parsed_instruction = current_state.instructions[current_state.PC + i];
+        // Remove processed instructions from next_state's queue
+        next_state.DecodedInstructionQueue.erase(
+            next_state.DecodedInstructionQueue.begin(), 
+            next_state.DecodedInstructionQueue.begin() + instructionsToDispatch
+        );
+
+        for (int i = 0; i < instructionsToDispatch; ++i) {
+            DecodedInstruction di = current_state.DecodedInstructionQueue[i];
+            ParsedInstruction parsed_instruction = di.inst;
             IntegerQueueEntry decoded_instruction;
 
             decoded_instruction.OpCode = parsed_instruction.opcode;
-            decoded_instruction.PC = current_state.PC + i;
+            decoded_instruction.PC = di.PC;
             decoded_instruction.DestRegister = parsed_instruction.dest;
             decoded_instruction.OpAValue = parsed_instruction.opA;
 
             if (parsed_instruction.is_addi) {
-                
+                //TODO
             }
             next_state.IntegerQueue.push_back(decoded_instruction);
-            next_state.DecodedPCs.push_back(current_state.PC + i);
-            next_state.PC++;
         }
     }
 

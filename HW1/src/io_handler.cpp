@@ -4,15 +4,6 @@
 #include <algorithm>
 #include <iostream>
 
-// struct for a parsed instruction, extracted from the input string
-struct ParsedInstruction {
-    std::string opcode;
-    int dest;     // ID of the destination register (logical)
-    int opA;      // ID of the first operand register (logical)
-    int opB;      // ID of the second operand register (logical) or the immediate value
-    bool is_addi; // Flag to indicate if opB is an immediate value
-};
-
 // INPUT FUNCTIONS
 
 // Extracts the list of instruction strings from the input JSON file
@@ -33,7 +24,7 @@ std::vector<std::string> loadProgram(const std::string& filepath) {
 }
 
 // Decodes a single instruction string (e.g., "addi x1, x2, 10") into a ParsedInstruction struct
-ParsedInstruction decodeInstructionString(const std::string& inst_str) {
+ParsedInstruction decodeInstructionString(std::string inst_str) {
     ParsedInstruction inst;
     
     // Remove commas to facilitate reading with stringstream

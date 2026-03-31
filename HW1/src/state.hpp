@@ -4,6 +4,19 @@
 #include <string>
 #include <cstdint>
 
+struct ParsedInstruction {
+    std::string opcode;
+    int dest;     // ID of the destination register (logical)
+    int opA;      // ID of the first operand register (logical)
+    int opB;      // ID of the second operand register (logical) or the immediate value
+    bool is_addi; // Flag to indicate if opB is an immediate value
+};
+
+struct DecodedInstruction {
+    uint64_t PC = 0;
+    ParsedInstruction inst;
+};
+
 // Struct for an entry in the Active List
 struct ActiveListEntry {
     bool Done = false;
@@ -43,6 +56,11 @@ struct SystemState {
     
     std::vector<ActiveListEntry> ActiveList;
     std::vector<IntegerQueueEntry> IntegerQueue;
+
+    // Added fields
+    std::vector<ParsedInstruction> instructions; // Static list of all loaded instructions
+    bool backpressure_on = false;
+    std::vector<DecodedInstruction> DecodedInstructionQueue; // The DIR buffer
 
     // Constructor to initialize the system state according to the specifications
     SystemState() {

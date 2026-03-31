@@ -1,4 +1,4 @@
-#pragma once
+
 #include "state.hpp"
 #include "io_handler.hpp"
 #include "pipeline.hpp"
@@ -29,7 +29,7 @@ int main() {
     
     // Main simulation loop 
     // the loop for cycle-by-cycle iterations.
-    while(!noInstruction(state) && !activeListIsEmpty(state)){
+    while(!noInstruction(state)){
     
     // do propagation
     // if you have multiple modules, propagate each of them

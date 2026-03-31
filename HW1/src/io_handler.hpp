@@ -6,14 +6,6 @@
 
 using json = nlohmann::json;
 
-struct ParsedInstruction {
-    std::string opcode;
-    int dest;
-    int opA;
-    int opB;
-    bool is_addi;
-};
-
 std::vector<std::string> loadProgram(const std::string& filepath);
 ParsedInstruction decodeInstructionString(std::string inst_str);
 json dumpStateToJson(const SystemState& state);
