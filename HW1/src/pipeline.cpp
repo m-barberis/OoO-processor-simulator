@@ -64,7 +64,9 @@ void instruction_commit(SystemState& current_state, SystemState& next_state, Act
 void instruction_exception(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction, int i) {
     next_state.Exception = true; // Set the exception flag in the next state
     next_state.ExceptionPC = examined_instruction.PC; // Set the Exception PC to the PC of the instruction that caused the exception
-    //TODO: We have to notify the fetch stage to stop fetching new instructions and to set the PC to 10000 to jump to the exception handler. This can be done by setting a flag in the next state that the fetch stage will check in the next cycle.
+    //TODO: We have to notify the fetch stage to stop fetching new instructions and to set the PC to 10000 to jump to the exception handler.
+    //  This can be done by setting a flag in the next state that the fetch stage will check in the next cycle.
+    // We can use the exception flag in the state already set to true.
 }
 
 void handle_exception_recovery(SystemState& current_state, SystemState& next_state) {
@@ -73,6 +75,18 @@ void handle_exception_recovery(SystemState& current_state, SystemState& next_sta
 
 void fetch_and_decode(SystemState& current_state, SystemState& next_state) {
     // Implementation for fetch and decode stage
+    bool backpressure_on = (next_state.ActiveList.size() == 32 && next_state.FreeList.size() == 0 && next_state.IntegerQueue.size() == 32);
+    
+    if (next_state.Exception == true) {
+        next_state.PC = 10000; // Set the PC to 10000 to jump to the exception handler
+    }
+    else if (backpressure_on == true) {
+        // Do nothing, wait for the backpressure to be released
+    }
+    else {
+        // Fetch the instruction at the current PC
+        
+    }
 }
 
 void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
