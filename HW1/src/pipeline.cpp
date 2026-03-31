@@ -75,12 +75,30 @@ void handle_exception_recovery(SystemState& current_state, SystemState& next_sta
 
 void fetch_and_decode(SystemState& current_state, SystemState& next_state) {
     // Implementation for fetch and decode stage
-    bool backpressure_on = (next_state.ActiveList.size() == 32 && next_state.FreeList.size() == 0 && next_state.IntegerQueue.size() == 32);
     
     if (next_state.Exception == true) {
         next_state.PC = 10000; // Set the PC to 10000 to jump to the exception handler
     }
     else if (backpressure_on == true) {
+        // Do nothing, wait for the backpressure to be released
+    }
+    else {
+        // Fetch the instruction at the current PC
+        int instructionsToFetch = std::min(4, static_cast<int>(current_state.instructions.size() - current_state.PC)); // Fetch up to 4 instructions    
+        
+        for (int i = 0; i < instructionsToFetch; ++i) {
+            ParsedInstruction parsed_instruction = current_state.instructions[current_state.PC + i];
+            next_state.PC++;
+        }
+    }
+}
+
+void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
+    // Implementation for rename and dispatch stage
+    bool backpressure_on = (next_state.ActiveList.size() == 32 && next_state.FreeList.size() == 0 && next_state.IntegerQueue.size() == 32);
+    next_state.backpressure_on = backpressure_on;
+
+    if (backpressure_on == true) {
         // Do nothing, wait for the backpressure to be released
     }
     else {
@@ -104,11 +122,9 @@ void fetch_and_decode(SystemState& current_state, SystemState& next_state) {
             next_state.PC++;
         }
     }
+
 }
 
-void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
-    // Implementation for rename and dispatch stage
-}
 
 void issue(SystemState& current_state, SystemState& next_state) {
     // Implementation for issue stage

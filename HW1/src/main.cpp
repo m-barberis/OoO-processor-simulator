@@ -18,6 +18,9 @@ int main() {
     // Initialize the system state
     SystemState state;
     state.instructions = instructions; // Store parsed instructions in the system state
+
+    bool backpressure_on = false;
+    state.backpressure_on = backpressure_on;
     
     // Vector to hold the simulation log (JSON states for each cycle)
     std::vector<json> simulationLog;
