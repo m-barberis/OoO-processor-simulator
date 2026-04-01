@@ -67,6 +67,8 @@ void instruction_exception(SystemState& current_state, SystemState& next_state, 
     //TODO: We have to notify the fetch stage to stop fetching new instructions and to set the PC to 10000 to jump to the exception handler.
     //  This can be done by setting a flag in the next state that the fetch stage will check in the next cycle.
     // We can use the exception flag in the state already set to true.
+
+    next_state.IntegerQueue.clear(); // Clear the Integer Queue in the next state
 }
 
 void handle_exception_recovery(SystemState& current_state, SystemState& next_state) {
@@ -110,7 +112,7 @@ void fetch_and_decode(SystemState& current_state, SystemState& next_state) {
 
 void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
     // Implementation for rename and dispatch stage
-    bool backpressure_on = (next_state.ActiveList.size() == 32 && next_state.FreeList.size() == 0 && next_state.IntegerQueue.size() == 32);
+    bool backpressure_on = (next_state.ActiveList.size() > 28 || next_state.FreeList.size() < 4 || next_state.IntegerQueue.size() > 28); // Check if backpressure should be applied based on the specified conditions
     next_state.backpressure_on = backpressure_on;
 
     if (backpressure_on == true) {
@@ -133,15 +135,24 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
 
             decoded_instruction.OpCode = parsed_instruction.opcode;
             decoded_instruction.PC = di.PC;
-            decoded_instruction.DestRegister = parsed_instruction.dest;
-            decoded_instruction.OpAValue = parsed_instruction.opA;
 
-            if (parsed_instruction.is_addi) {
-                //TODO
+            if (next_state.FreeList.empty()) {
+                // If there are no free physical registers, we cannot dispatch more instructions
+                break;
             }
-            else {
-                decoded_instruction.OpBValue = parsed_instruction.opB;
+            decoded_instruction.DestRegister = current_state.FreeList.front(); // Get a physical register from the Free List for the destination
+
+            next_state.FreeList.erase(next_state.FreeList.begin()); // Remove the allocated physical register from the Free List
+            next_state.RegisterMapTable[parsed_instruction.dest] = decoded_instruction.DestRegister; // Update the Register Map Table to map the logical destination register to the new physical register
+
+            // Operand A
+            decoded_instruction.OpARegTag = current_state.RegisterMapTable[parsed_instruction.opA]; // Get the value of operand A from the Physical Register File using the Register Map Table
+
+            // Operand B
+            if (!parsed_instruction.is_addi) {
+                decoded_instruction.OpBRegTag = current_state.RegisterMapTable[parsed_instruction.opB]; // Get the value of operand B from the Physical Register File using the Register Map Table
             }
+
             next_state.IntegerQueue.push_back(decoded_instruction);
         }
     }
