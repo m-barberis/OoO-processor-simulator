@@ -78,7 +78,7 @@ void fetch_and_decode(SystemState& current_state, SystemState& next_state) {
     
     if (next_state.Exception == true) {
         next_state.PC = 10000; // Set the PC to 10000 to jump to the exception handler
-        next_state.IntegerQueue.clear(); // Clear the Integer Queue in the next state
+        next_state.DecodedInstructionQueue.clear(); // Clear the Decoded Instruction Queue in the next state
     }
     else if (current_state.backpressure_on == true) {
         // Do nothing, wait for the backpressure to be released
