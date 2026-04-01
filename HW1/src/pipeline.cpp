@@ -25,7 +25,7 @@ void latch(SystemState& state) {
 
 bool noInstruction(SystemState& state) {
     // Implementation for checking if there are no more instructions to fetch
-    return state.DecodedPCs.empty() && state.PC == state.instructions.size() && activeListIsEmpty(state); //TODO: This is not correct, we should check if there are no more instructions to fetch
+    return state.DecodedPCs.empty() && state.PC == state.instructions.size() && activeListIsEmpty(state); //TODO: To check if correct 
 }
 
 bool activeListIsEmpty(SystemState& state) {
@@ -41,11 +41,11 @@ void commit(SystemState& current_state, SystemState& next_state) {
         ActiveListEntry examined_instruction = current_state.ActiveList[i];
         // Implementation for committing each instruction
         if (examined_instruction.Done == true && examined_instruction.Exception == true) { // Handle exceptions if any
-            instruction_exception(current_state, next_state, examined_instruction, i); // Processor enters exception mode in the next cycle and the PC is set to 10000 to jump to the exception handler
+            instruction_exception(current_state, next_state, examined_instruction); // Processor enters exception mode in the next cycle and the PC is set to 10000 to jump to the exception handler
             break; // Stop committing further instructions if an exception is encountered
         }
         else if (examined_instruction.Done == true) { // Mark the instruction as done in the current state
-            instruction_commit(current_state, next_state, examined_instruction, i); // Call the instruction commit function to handle the specific commit logic for the instruction
+            instruction_commit(current_state, next_state, examined_instruction); // Call the instruction commit function to handle the specific commit logic for the instruction
         }
         else {
             break; // Stop committing further instructions if the current instruction is not done
@@ -53,7 +53,7 @@ void commit(SystemState& current_state, SystemState& next_state) {
     }
 }
 
-void instruction_commit(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction, int i) {
+void instruction_commit(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction) {
     // Implementation for committing instructions
     // Only free the old destination physical register
     next_state.FreeList.push_back(examined_instruction.OldDestination);
@@ -61,7 +61,7 @@ void instruction_commit(SystemState& current_state, SystemState& next_state, Act
 
 }
 
-void instruction_exception(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction, int i) {
+void instruction_exception(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction) {
     next_state.Exception = true; // Set the exception flag in the next state
     next_state.ExceptionPC = examined_instruction.PC; // Set the Exception PC to the PC of the instruction that caused the exception
     //TODO: We have to notify the fetch stage to stop fetching new instructions and to set the PC to 10000 to jump to the exception handler.

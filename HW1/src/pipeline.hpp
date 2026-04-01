@@ -19,5 +19,5 @@ void execute(SystemState& current_state, SystemState& next_state);
 
 // Helpers
 void handle_exception_recovery(SystemState& current_state, SystemState& next_state);
-void instruction_commit(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction, int i);
-void instruction_exception(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction, int i);
+void instruction_commit(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction);
+void instruction_exception(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction);
