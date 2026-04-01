@@ -78,6 +78,7 @@ void fetch_and_decode(SystemState& current_state, SystemState& next_state) {
     
     if (next_state.Exception == true) {
         next_state.PC = 10000; // Set the PC to 10000 to jump to the exception handler
+        next_state.IntegerQueue.clear(); // Clear the Integer Queue in the next state
     }
     else if (current_state.backpressure_on == true) {
         // Do nothing, wait for the backpressure to be released
@@ -137,6 +138,9 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
 
             if (parsed_instruction.is_addi) {
                 //TODO
+            }
+            else {
+                decoded_instruction.OpBValue = parsed_instruction.opB;
             }
             next_state.IntegerQueue.push_back(decoded_instruction);
         }
