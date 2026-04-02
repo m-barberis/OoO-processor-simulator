@@ -30,7 +30,7 @@ void latch(SystemState& current_state, SystemState& next_state) {
 
 bool noInstruction(SystemState& state) {
     // Implementation for checking if there are no more instructions to fetch
-    return state.DecodedPCs.empty() && state.PC == state.instructions.size() && activeListIsEmpty(state); //TODO: To check if correct 
+    return state.DecodedPCs.empty() && state.PC >= state.instructions.size() && activeListIsEmpty(state); // Checks if PC has reached or exceeded instructions size (e.g. PC=10000 during exception)
 }
 
 bool activeListIsEmpty(SystemState& state) {
@@ -148,6 +148,7 @@ void fetch_and_decode(SystemState& current_state, SystemState& next_state) {
 }
 
 void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
+    if (next_state.Exception) return;
     // Implementation for rename and dispatch stage
     bool backpressure_on = (next_state.ActiveList.size() > 28 || next_state.FreeList.size() < 4 || next_state.IntegerQueue.size() > 28); // Check if backpressure should be applied based on the specified conditions
     next_state.backpressure_on = backpressure_on;
@@ -182,9 +183,7 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
             next_state.FreeList.erase(next_state.FreeList.begin()); // Remove the allocated physical register from the Free List
             uint32_t old_dest = next_state.RegisterMapTable[parsed_instruction.dest]; // Store old physical register before updating it
 
-            next_state.RegisterMapTable[parsed_instruction.dest] = decoded_instruction.DestRegister; // Update the Register Map Table to map the logical destination register to the new physical register
-            next_state.BusyBitTable[decoded_instruction.DestRegister] = true; // Mark the destination physical register as busy
-            
+            // Read Operands BEFORE updating the Register Map Table for the destination!
             // Operand A
             decoded_instruction.OpARegTag = next_state.RegisterMapTable[parsed_instruction.opA]; // Get the value of operand A from the Physical Register File using the Register Map Table
             if (next_state.BusyBitTable[decoded_instruction.OpARegTag]) { //FORWARDING PATHS 
@@ -210,6 +209,10 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
 
             }
 
+            // NOW update the Register Map Table to map the logical destination register to the new physical register
+            next_state.RegisterMapTable[parsed_instruction.dest] = decoded_instruction.DestRegister; 
+            next_state.BusyBitTable[decoded_instruction.DestRegister] = true; // Mark the destination physical register as busy
+
             next_state.IntegerQueue.push_back(decoded_instruction); // Add the decoded instruction to the Integer Queue in the next state
             
             // Updating the Active List 
@@ -226,6 +229,7 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
 
 
 void issue(SystemState& current_state, SystemState& next_state) {
+    if (next_state.Exception) return;
     // Implementation for issue stage
     next_state.ReadyInstructions.clear();
     
@@ -282,6 +286,7 @@ void updateIntegerQueue(SystemState& next_state) {
 }
 
 void execute(SystemState& current_state, SystemState& next_state) {
+    if (next_state.Exception) return;
     // Implementation for execute stage (has to take 2 clock cycles)
     
     // Clear next_state's ExecutionQueue because we are consuming its elements this cycle
@@ -293,9 +298,9 @@ void execute(SystemState& current_state, SystemState& next_state) {
             next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue + instruction.OpBValue;
         } else if (instruction.OpCode == "sub") {
             next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue - instruction.OpBValue;
-        } else if (instruction.OpCode == "mul") {
+        } else if (instruction.OpCode == "mulu") {
             next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue * instruction.OpBValue;
-        } else if (instruction.OpCode == "div") {
+        } else if (instruction.OpCode == "divu") {
             if (instruction.OpBValue != 0) { // basic safety check for division by zero
                 next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue / instruction.OpBValue;
             }
@@ -309,6 +314,19 @@ void execute(SystemState& current_state, SystemState& next_state) {
                     it->Exception = true;
                 }
                 
+            }
+        } else if (instruction.OpCode == "remu") {
+            if (instruction.OpBValue != 0) { 
+                next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue % instruction.OpBValue;
+            }
+            else {
+                auto it = std::find_if(next_state.ActiveList.begin(), next_state.ActiveList.end(),
+                    [&instruction](const ActiveListEntry& entry) {
+                        return entry.PC == instruction.PC;
+                    });
+                if (it != next_state.ActiveList.end()) {
+                    it->Exception = true;
+                }
             }
         }
         

@@ -28,9 +28,12 @@ int main(int argc, char* argv[]) {
 
     simulationLog.push_back(dumpStateToJson(state)); // Log the initial state before starting the simulation
     
+    // To avoid infinite loops 
+    int cycle_count = 0; // TODO: To remove 
+
     // Main simulation loop 
     // the loop for cycle-by-cycle iterations.
-    while(!noInstruction(state)){
+    while(!noInstruction(state) && cycle_count < 1000){
     
     // do propagation
     // if you have multiple modules, propagate each of them
@@ -40,6 +43,8 @@ int main(int argc, char* argv[]) {
 
     // dump the state
     simulationLog.push_back(dumpStateToJson(state));
+    
+    cycle_count++; //TODO: To remove 
 
     }
     // save the output JSON log

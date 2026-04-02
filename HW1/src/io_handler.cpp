@@ -83,6 +83,9 @@ json dumpStateToJson(const SystemState& state) {
     // We manually construct the JSON array for the integer queue entries 
     json integerQueueJson = json::array();
     for (const auto& entry : state.IntegerQueue) {
+        std::string output_opcode = entry.OpCode;
+        if (output_opcode == "addi") output_opcode = "add";
+
         integerQueueJson.push_back({
             {"DestRegister", entry.DestRegister},
             {"OpAIsReady", entry.OpAIsReady},
@@ -91,7 +94,7 @@ json dumpStateToJson(const SystemState& state) {
             {"OpBIsReady", entry.OpBIsReady},
             {"OpBRegTag", entry.OpBRegTag},
             {"OpBValue", entry.OpBValue},
-            {"OpCode", entry.OpCode},
+            {"OpCode", output_opcode},
             {"PC", entry.PC}
         });
     }
