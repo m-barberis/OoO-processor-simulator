@@ -73,7 +73,10 @@ void instruction_exception(SystemState& current_state, SystemState& next_state, 
     //  This can be done by setting a flag in the next state that the fetch stage will check in the next cycle.
     // We can use the exception flag in the state already set to true.
 
-    next_state.IntegerQueue.clear(); // Clear the Integer Queue in the next state
+    // Clear the queues in the next state
+    next_state.IntegerQueue.clear(); 
+    next_state.ReadyInstructions.clear();
+    next_state.ExecutionQueue.clear();
 }
 
 void handle_exception_recovery(SystemState& current_state, SystemState& next_state) {
