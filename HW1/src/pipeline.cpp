@@ -192,6 +192,8 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
 
 void issue(SystemState& current_state, SystemState& next_state) {
     // Implementation for issue stage
+    next_state.ReadyInstructions.clear();
+    
     updateIntegerQueue(next_state);
     std::vector<IntegerQueueEntry> ready_instructions;
     for (auto& instruction : next_state.IntegerQueue) {
@@ -221,11 +223,12 @@ void issue(SystemState& current_state, SystemState& next_state) {
         }
 
         // Pass the instruction to the execute stage
-        next_state.ExecutionQueue.push_back(instruction);
+        next_state.ReadyInstructions.push_back(instruction);
     }
 }
 
 void updateIntegerQueue(SystemState& next_state) {
+
     // Implementation for updating the Integer Queue (we are considering forwarding paths also here)
     for (auto& instruction : next_state.IntegerQueue) {
         if (!instruction.OpAIsReady) {
@@ -244,31 +247,34 @@ void updateIntegerQueue(SystemState& next_state) {
 }
 
 void execute(SystemState& current_state, SystemState& next_state) {
-    // Implementation for execute stage
+    // Implementation for execute stage (has to take 2 clock cycles)
     
     // Clear next_state's ExecutionQueue because we are consuming its elements this cycle
     next_state.ExecutionQueue.clear();
 
     for (auto& instruction : current_state.ExecutionQueue) {
         // Calculate the result and write to Physical Register File
-        switch (instruction.OpCode) {
-            case "add":
-                next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue + instruction.OpBValue;
-                break;
-            case "addi":
-                next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue + instruction.OpBValue;
-                break;
-            case "sub":
-                next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue - instruction.OpBValue;
-                break;
-            case "mul":
-                next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue * instruction.OpBValue;
-                break;
-            case "div":
+        if (instruction.OpCode == "add" || instruction.OpCode == "addi") {
+            next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue + instruction.OpBValue;
+        } else if (instruction.OpCode == "sub") {
+            next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue - instruction.OpBValue;
+        } else if (instruction.OpCode == "mul") {
+            next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue * instruction.OpBValue;
+        } else if (instruction.OpCode == "div") {
+            if (instruction.OpBValue != 0) { // basic safety check for division by zero
                 next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue / instruction.OpBValue;
-                break;
-            default:
-                break;
+            }
+            else {
+                // Find the precise entry in ActiveList and trigger exception if we try to divide by 0
+                auto it = std::find_if(next_state.ActiveList.begin(), next_state.ActiveList.end(),
+                    [&instruction](const ActiveListEntry& entry) {
+                        return entry.PC == instruction.PC;
+                    });
+                if (it != next_state.ActiveList.end()) {
+                    it->Exception = true;
+                }
+                
+            }
         }
         
         // Clear the busy bit to wakeup dependent instructions in the Integer Queue
@@ -282,4 +288,6 @@ void execute(SystemState& current_state, SystemState& next_state) {
             }
         }
     }
+
+    next_state.ExecutionQueue = current_state.ReadyInstructions; // To execute them at the next cycle
 }
