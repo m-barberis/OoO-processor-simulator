@@ -34,8 +34,8 @@ int main() {
     // do propagation
     // if you have multiple modules, propagate each of them
     propagate(state);
-    // advance clock, start next cycle
-    latch(state);
+    
+    // latch stage moved at the end of propagate 
 
     // dump the state
     simulationLog.push_back(dumpStateToJson(state));

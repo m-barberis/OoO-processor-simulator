@@ -17,6 +17,9 @@ void propagate(SystemState& current_state) {
         rename_and_dispatch(current_state, next_state);
         fetch_and_decode(current_state, next_state);
     }
+
+    // advance clock, start next cycle
+    latch(current_state, next_state);
 }
 
 
