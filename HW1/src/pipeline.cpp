@@ -143,6 +143,8 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
             decoded_instruction.DestRegister = next_state.FreeList.front(); // Get a physical register from the Free List for the destination
 
             next_state.FreeList.erase(next_state.FreeList.begin()); // Remove the allocated physical register from the Free List
+            uint32_t old_dest = next_state.RegisterMapTable[parsed_instruction.dest]; // Store old physical register before updating it
+
             next_state.RegisterMapTable[parsed_instruction.dest] = decoded_instruction.DestRegister; // Update the Register Map Table to map the logical destination register to the new physical register
             next_state.BusyBitTable[decoded_instruction.DestRegister] = true; // Mark the destination physical register as busy
             
@@ -171,14 +173,13 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
 
             }
 
-
             next_state.IntegerQueue.push_back(decoded_instruction); // Add the decoded instruction to the Integer Queue in the next state
             
             // Updating the Active List 
             ActiveListEntry active_list_entry;
             active_list_entry.PC = decoded_instruction.PC;
             active_list_entry.LogicalDestination = parsed_instruction.dest;
-            active_list_entry.OldDestination = current_state.RegisterMapTable[parsed_instruction.dest]; // Store the old physical register mapping for the destination logical register in the Active List entry (next_state already updated the Register Map Table to the new physical register)
+            active_list_entry.OldDestination = old_dest; // Store the old physical register mapping for the destination logical register in the Active List entry (respecting intra-cycle dependencies)
             next_state.ActiveList.push_back(active_list_entry);
 
         }
