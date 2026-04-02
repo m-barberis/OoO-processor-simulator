@@ -171,9 +171,16 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
 
             }
 
-            //TODO: We still need to account for the forwarding paths (maybe considering already next state??)
 
-            next_state.IntegerQueue.push_back(decoded_instruction);
+            next_state.IntegerQueue.push_back(decoded_instruction); // Add the decoded instruction to the Integer Queue in the next state
+            
+            // Updating the Active List 
+            ActiveListEntry active_list_entry;
+            active_list_entry.PC = decoded_instruction.PC;
+            active_list_entry.LogicalDestination = parsed_instruction.dest;
+            active_list_entry.OldDestination = current_state.RegisterMapTable[parsed_instruction.dest]; // Store the old physical register mapping for the destination logical register in the Active List entry (next_state already updated the Register Map Table to the new physical register)
+            next_state.ActiveList.push_back(active_list_entry);
+
         }
     }
 
