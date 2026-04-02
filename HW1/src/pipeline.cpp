@@ -81,6 +81,35 @@ void instruction_exception(SystemState& current_state, SystemState& next_state, 
 
 void handle_exception_recovery(SystemState& current_state, SystemState& next_state) {
     // Implementation for exception recovery mode
+    if (!current_state.ActiveList.empty()) {
+        int instructionsToRestore = std::min(4, static_cast<int>(next_state.ActiveList.size()));
+
+        for (int i = 0; i < instructionsToRestore; ++i) {
+            // Unroll instructions in reverse program order (newest first = back of the Active List)
+            ActiveListEntry instruction = next_state.ActiveList.back();
+            
+            // Get the physical register that this instruction allocated
+            int current_inst_physical_destination = next_state.RegisterMapTable[instruction.LogicalDestination];
+            
+            // Free the physical register that was allocated by this instruction
+            next_state.FreeList.push_back(current_inst_physical_destination);
+            
+            // Restore the Register Map Table to point to the previous physical register
+            next_state.RegisterMapTable[instruction.LogicalDestination] = instruction.OldDestination;
+            
+            // The physical register returned to the FreeList should no longer be busy 
+            next_state.BusyBitTable[current_inst_physical_destination] = false;
+
+            // Remove the instruction from the Active List
+            next_state.ActiveList.pop_back();
+        }
+    }
+    
+    // When the Active List is fully flushed (or if it was already empty), exit exception recovery mode
+    if (next_state.ActiveList.empty()) {
+        next_state.Exception = false;
+        next_state.ExceptionPC = 0;
+    }
 }
 
 void fetch_and_decode(SystemState& current_state, SystemState& next_state) {
