@@ -166,7 +166,8 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
             }
             else {
                 decoded_instruction.OpBIsReady = true; // Operand B is ready if it is an immediate value
-                decoded_instruction.OpBValue = parsed_instruction.opB; // Get the immediate value for operand B
+                decoded_instruction.OpBValue = static_cast<uint64_t>(static_cast<int64_t>(parsed_instruction.opB)); // Get the immediate value for operand B sign extended
+
             }
 
             //TODO: We still need to account for the forwarding paths (maybe considering already next state??)
