@@ -140,14 +140,15 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
                 // If there are no free physical registers, we cannot dispatch more instructions
                 break;
             }
-            decoded_instruction.DestRegister = current_state.FreeList.front(); // Get a physical register from the Free List for the destination
+            decoded_instruction.DestRegister = next_state.FreeList.front(); // Get a physical register from the Free List for the destination
 
             next_state.FreeList.erase(next_state.FreeList.begin()); // Remove the allocated physical register from the Free List
             next_state.RegisterMapTable[parsed_instruction.dest] = decoded_instruction.DestRegister; // Update the Register Map Table to map the logical destination register to the new physical register
-
+            next_state.BusyBitTable[decoded_instruction.DestRegister] = true; // Mark the destination physical register as busy
+            
             // Operand A
-            decoded_instruction.OpARegTag = current_state.RegisterMapTable[parsed_instruction.opA]; // Get the value of operand A from the Physical Register File using the Register Map Table
-            if (current_state.BusyBitTable[decoded_instruction.OpARegTag] && next_state.BusyBitTable[decoded_instruction.OpARegTag]) { //FORWARDING PATHS 
+            decoded_instruction.OpARegTag = next_state.RegisterMapTable[parsed_instruction.opA]; // Get the value of operand A from the Physical Register File using the Register Map Table
+            if (next_state.BusyBitTable[decoded_instruction.OpARegTag]) { //FORWARDING PATHS 
                 decoded_instruction.OpAIsReady = false; // Operand A is not ready if the corresponding physical register is busy
             } else {
                 decoded_instruction.OpAIsReady = true; // Operand A is ready if the corresponding physical register is not busy
@@ -156,8 +157,8 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
 
             // Operand B
             if (!parsed_instruction.is_addi) {
-                decoded_instruction.OpBRegTag = current_state.RegisterMapTable[parsed_instruction.opB]; // Get the value of operand B from the Physical Register File using the Register Map Table
-                if (current_state.BusyBitTable[decoded_instruction.OpBRegTag] && next_state.BusyBitTable[decoded_instruction.OpBRegTag]) { //FORWARDING PATHS 
+                decoded_instruction.OpBRegTag = next_state.RegisterMapTable[parsed_instruction.opB]; // Get the value of operand B from the Physical Register File using the Register Map Table
+                if (next_state.BusyBitTable[decoded_instruction.OpBRegTag]) { //FORWARDING PATHS 
                     decoded_instruction.OpBIsReady = false; // Operand B is not ready if the corresponding physical register is busy
                 } else {
                     decoded_instruction.OpBIsReady = true; // Operand B is ready if the corresponding physical register is not busy
