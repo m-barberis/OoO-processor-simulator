@@ -147,21 +147,21 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
 
             // Operand A
             decoded_instruction.OpARegTag = current_state.RegisterMapTable[parsed_instruction.opA]; // Get the value of operand A from the Physical Register File using the Register Map Table
-            if (current_state.BusyBitTable[decoded_instruction.OpARegTag]) {
+            if (current_state.BusyBitTable[decoded_instruction.OpARegTag] && next_state.BusyBitTable[decoded_instruction.OpARegTag]) { //FORWARDING PATHS 
                 decoded_instruction.OpAIsReady = false; // Operand A is not ready if the corresponding physical register is busy
             } else {
                 decoded_instruction.OpAIsReady = true; // Operand A is ready if the corresponding physical register is not busy
-                decoded_instruction.OpAValue = current_state.PhysicalRegisterFile[decoded_instruction.OpARegTag]; // Get the value of operand A from the Physical Register File
+                decoded_instruction.OpAValue = next_state.PhysicalRegisterFile[decoded_instruction.OpARegTag]; // Get the value of operand A from the Physical Register File
             }
 
             // Operand B
             if (!parsed_instruction.is_addi) {
                 decoded_instruction.OpBRegTag = current_state.RegisterMapTable[parsed_instruction.opB]; // Get the value of operand B from the Physical Register File using the Register Map Table
-                if (current_state.BusyBitTable[decoded_instruction.OpBRegTag]) {
+                if (current_state.BusyBitTable[decoded_instruction.OpBRegTag] && next_state.BusyBitTable[decoded_instruction.OpBRegTag]) { //FORWARDING PATHS 
                     decoded_instruction.OpBIsReady = false; // Operand B is not ready if the corresponding physical register is busy
                 } else {
                     decoded_instruction.OpBIsReady = true; // Operand B is ready if the corresponding physical register is not busy
-                    decoded_instruction.OpBValue = current_state.PhysicalRegisterFile[decoded_instruction.OpBRegTag]; // Get the value of operand B from the Physical Register File
+                    decoded_instruction.OpBValue = next_state.PhysicalRegisterFile[decoded_instruction.OpBRegTag]; // Get the value of operand B from the Physical Register File
                 }
             }
             else {
