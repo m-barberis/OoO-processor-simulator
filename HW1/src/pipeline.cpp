@@ -30,7 +30,7 @@ void latch(SystemState& current_state, SystemState& next_state) {
 
 bool noInstruction(SystemState& state) {
     // Implementation for checking if there are no more instructions to fetch
-    return state.DecodedPCs.empty() && state.PC >= state.instructions.size() && activeListIsEmpty(state); // Checks if PC has reached or exceeded instructions size (e.g. PC=10000 during exception)
+    return state.DecodedPCs.empty() && state.PC >= state.instructions.size() && activeListIsEmpty(state) && !state.Exception; // Must also wait for exception recovery to fully complete (Exception transitions to false)
 }
 
 bool activeListIsEmpty(SystemState& state) {
@@ -69,19 +69,19 @@ void instruction_commit(SystemState& current_state, SystemState& next_state, Act
 void instruction_exception(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction) {
     next_state.Exception = true; // Set the exception flag in the next state
     next_state.ExceptionPC = examined_instruction.PC; // Set the Exception PC to the PC of the instruction that caused the exception
-    //TODO: We have to notify the fetch stage to stop fetching new instructions and to set the PC to 10000 to jump to the exception handler.
-    //  This can be done by setting a flag in the next state that the fetch stage will check in the next cycle.
-    // We can use the exception flag in the state already set to true.
 
-    // Clear the queues in the next state
-    next_state.IntegerQueue.clear(); 
+    // Clear ALL in-flight instruction buffers so noInstruction() works correctly during recovery
+    next_state.IntegerQueue.clear();
     next_state.ReadyInstructions.clear();
     next_state.ExecutionQueue.clear();
+    next_state.DecodedInstructionQueue.clear(); // BUG FIX: must clear this or noInstruction() stays false
+    next_state.DecodedPCs.clear();              // BUG FIX: must clear this or noInstruction() stays false
 }
 
 void handle_exception_recovery(SystemState& current_state, SystemState& next_state) {
     // Implementation for exception recovery mode
     if (!current_state.ActiveList.empty()) {
+        // There are still entries to drain — unroll up to 4 per cycle
         int instructionsToRestore = std::min(4, static_cast<int>(next_state.ActiveList.size()));
 
         for (int i = 0; i < instructionsToRestore; ++i) {
@@ -103,12 +103,14 @@ void handle_exception_recovery(SystemState& current_state, SystemState& next_sta
             // Remove the instruction from the Active List
             next_state.ActiveList.pop_back();
         }
-    }
-    
-    // When the Active List is fully flushed (or if it was already empty), exit exception recovery mode
-    if (next_state.ActiveList.empty()) {
+        // NOTE: Do NOT clear Exception here even if AL is now empty.
+        // The reference requires one extra cycle with Exception=True + empty AL
+        // before transitioning back to normal mode.
+    } else {
+        // The AL was already empty at the START of this cycle (current_state).
+        // This is the extra cycle after draining — now we can exit exception mode.
         next_state.Exception = false;
-        next_state.ExceptionPC = 0;
+        // ExceptionPC is intentionally preserved
     }
 }
 
@@ -116,7 +118,7 @@ void fetch_and_decode(SystemState& current_state, SystemState& next_state) {
     // Implementation for fetch and decode stage
     
     if (next_state.Exception == true) {
-        next_state.PC = 10000; // Set the PC to 10000 to jump to the exception handler
+        next_state.PC = 0x10000; // Set the PC to 0x10000 (65536) to jump to the exception handler
         next_state.DecodedInstructionQueue.clear(); // Clear the Decoded Instruction Queue in the next state
     }
     else if (current_state.backpressure_on == true) {
@@ -293,6 +295,8 @@ void execute(SystemState& current_state, SystemState& next_state) {
     next_state.ExecutionQueue.clear();
 
     for (auto& instruction : current_state.ExecutionQueue) {
+        bool caused_exception = false;
+
         // Calculate the result and write to Physical Register File
         if (instruction.OpCode == "add" || instruction.OpCode == "addi") {
             next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue + instruction.OpBValue;
@@ -301,11 +305,12 @@ void execute(SystemState& current_state, SystemState& next_state) {
         } else if (instruction.OpCode == "mulu") {
             next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue * instruction.OpBValue;
         } else if (instruction.OpCode == "divu") {
-            if (instruction.OpBValue != 0) { // basic safety check for division by zero
+            if (instruction.OpBValue != 0) {
                 next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue / instruction.OpBValue;
             }
             else {
-                // Find the precise entry in ActiveList and trigger exception if we try to divide by 0
+                // Divide by zero: mark exception in Active List
+                caused_exception = true;
                 auto it = std::find_if(next_state.ActiveList.begin(), next_state.ActiveList.end(),
                     [&instruction](const ActiveListEntry& entry) {
                         return entry.PC == instruction.PC;
@@ -313,13 +318,14 @@ void execute(SystemState& current_state, SystemState& next_state) {
                 if (it != next_state.ActiveList.end()) {
                     it->Exception = true;
                 }
-                
             }
         } else if (instruction.OpCode == "remu") {
             if (instruction.OpBValue != 0) { 
                 next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue % instruction.OpBValue;
             }
             else {
+                // Remainder by zero: mark exception in Active List
+                caused_exception = true;
                 auto it = std::find_if(next_state.ActiveList.begin(), next_state.ActiveList.end(),
                     [&instruction](const ActiveListEntry& entry) {
                         return entry.PC == instruction.PC;
@@ -330,8 +336,11 @@ void execute(SystemState& current_state, SystemState& next_state) {
             }
         }
         
-        // Clear the busy bit to wakeup dependent instructions in the Integer Queue
-        next_state.BusyBitTable[instruction.DestRegister] = false;
+        // Only clear the busy bit if the instruction produced a valid result.
+        // Exception-causing instructions leave the busy bit set (no valid result).
+        if (!caused_exception) {
+            next_state.BusyBitTable[instruction.DestRegister] = false;
+        }
 
         // Mark the instruction as "Done" in the Active List (ROB) so it can commit later
         for (auto& al_entry : next_state.ActiveList) {
