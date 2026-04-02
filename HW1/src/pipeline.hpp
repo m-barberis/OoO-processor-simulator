@@ -14,11 +14,11 @@ void commit(SystemState& current_state, SystemState& next_state); // Function fo
 // Pipeline stages
 void fetch_and_decode(SystemState& current_state, SystemState& next_state);
 void rename_and_dispatch(SystemState& current_state, SystemState& next_state);
-void issue(SystemState& current_state, SystemState& next_state);
+void issue(SystemState& next_state);
 void execute(SystemState& current_state, SystemState& next_state);
 
 // Helpers
 void handle_exception_recovery(SystemState& current_state, SystemState& next_state);
-void instruction_commit(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction);
-void instruction_exception(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction);
+void instruction_commit(SystemState& next_state, ActiveListEntry& examined_instruction);
+void instruction_exception(SystemState& next_state, ActiveListEntry& examined_instruction);
 void updateIntegerQueue(SystemState& next_state);

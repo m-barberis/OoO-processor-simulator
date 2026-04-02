@@ -13,7 +13,7 @@ void propagate(SystemState& current_state) {
         // Normal mode (evaluate in reverse order to model combinational backward paths)
         commit(current_state, next_state);
         execute(current_state, next_state);
-        issue(current_state, next_state);
+        issue(next_state);
         rename_and_dispatch(current_state, next_state);
         fetch_and_decode(current_state, next_state);
     }
@@ -46,11 +46,11 @@ void commit(SystemState& current_state, SystemState& next_state) {
         ActiveListEntry examined_instruction = current_state.ActiveList[i];
         // Implementation for committing each instruction
         if (examined_instruction.Done == true && examined_instruction.Exception == true) { // Handle exceptions if any
-            instruction_exception(current_state, next_state, examined_instruction); // Processor enters exception mode in the next cycle and the PC is set to 10000 to jump to the exception handler
+            instruction_exception(next_state, examined_instruction); // Processor enters exception mode in the next cycle and the PC is set to 10000 to jump to the exception handler
             break; // Stop committing further instructions if an exception is encountered
         }
         else if (examined_instruction.Done == true) { // Mark the instruction as done in the current state
-            instruction_commit(current_state, next_state, examined_instruction); // Call the instruction commit function to handle the specific commit logic for the instruction
+            instruction_commit(next_state, examined_instruction); // Call the instruction commit function to handle the specific commit logic for the instruction
         }
         else {
             break; // Stop committing further instructions if the current instruction is not done
@@ -58,7 +58,7 @@ void commit(SystemState& current_state, SystemState& next_state) {
     }
 }
 
-void instruction_commit(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction) {
+void instruction_commit(SystemState& next_state, ActiveListEntry& examined_instruction) {
     // Implementation for committing instructions
     // Only free the old destination physical register
     next_state.FreeList.push_back(examined_instruction.OldDestination);
@@ -66,7 +66,7 @@ void instruction_commit(SystemState& current_state, SystemState& next_state, Act
 
 }
 
-void instruction_exception(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction) {
+void instruction_exception(SystemState& next_state, ActiveListEntry& examined_instruction) {
     next_state.Exception = true; // Set the exception flag in the next state
     next_state.ExceptionPC = examined_instruction.PC; // Set the Exception PC to the PC of the instruction that caused the exception
 
@@ -230,7 +230,7 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
 }
 
 
-void issue(SystemState& current_state, SystemState& next_state) {
+void issue(SystemState& next_state) {
     if (next_state.Exception) return;
     // Implementation for issue stage
     next_state.ReadyInstructions.clear();
