@@ -56,6 +56,7 @@ struct SystemState {
     
     std::vector<ActiveListEntry> ActiveList;
     std::vector<IntegerQueueEntry> IntegerQueue;
+    std::vector<IntegerQueueEntry> ExecutionQueue; // Holds instructions issued this cycle to be executed in the next cycle
 
     // Added fields
     std::vector<ParsedInstruction> instructions; // Static list of all loaded instructions

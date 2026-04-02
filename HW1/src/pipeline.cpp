@@ -1,6 +1,7 @@
 #include "pipeline.hpp"
 #include "state.hpp"
 #include "io_handler.hpp"
+#include <algorithm>
 
 void propagate(SystemState& current_state) {
     SystemState next_state = current_state;
@@ -192,6 +193,36 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
 void issue(SystemState& current_state, SystemState& next_state) {
     // Implementation for issue stage
     updateIntegerQueue(next_state);
+    std::vector<IntegerQueueEntry> ready_instructions;
+    for (auto& instruction : next_state.IntegerQueue) {
+        if (instruction.OpAIsReady && instruction.OpBIsReady) {
+            ready_instructions.push_back(instruction);
+        }
+    }
+
+    // Sort ready instructions by PC (crescent/ascending order -> oldest instructions first)
+    std::sort(ready_instructions.begin(), ready_instructions.end(), 
+        [](const IntegerQueueEntry& a, const IntegerQueueEntry& b) {
+            return a.PC < b.PC;
+        });
+
+    int instructionsToIssue = std::min(4, static_cast<int>(ready_instructions.size()));
+    for (int i = 0; i < instructionsToIssue; ++i) {
+        IntegerQueueEntry instruction = ready_instructions[i];
+        
+        // Find the precise entry in IntegerQueue and remove it
+        auto it = std::find_if(next_state.IntegerQueue.begin(), next_state.IntegerQueue.end(),
+            [&instruction](const IntegerQueueEntry& entry) {
+                return entry.PC == instruction.PC;
+            });
+        
+        if (it != next_state.IntegerQueue.end()) {
+            next_state.IntegerQueue.erase(it);
+        }
+
+        // Pass the instruction to the execute stage
+        next_state.ExecutionQueue.push_back(instruction);
+    }
 }
 
 void updateIntegerQueue(SystemState& next_state) {
@@ -214,4 +245,41 @@ void updateIntegerQueue(SystemState& next_state) {
 
 void execute(SystemState& current_state, SystemState& next_state) {
     // Implementation for execute stage
+    
+    // Clear next_state's ExecutionQueue because we are consuming its elements this cycle
+    next_state.ExecutionQueue.clear();
+
+    for (auto& instruction : current_state.ExecutionQueue) {
+        // Calculate the result and write to Physical Register File
+        switch (instruction.OpCode) {
+            case "add":
+                next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue + instruction.OpBValue;
+                break;
+            case "addi":
+                next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue + instruction.OpBValue;
+                break;
+            case "sub":
+                next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue - instruction.OpBValue;
+                break;
+            case "mul":
+                next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue * instruction.OpBValue;
+                break;
+            case "div":
+                next_state.PhysicalRegisterFile[instruction.DestRegister] = instruction.OpAValue / instruction.OpBValue;
+                break;
+            default:
+                break;
+        }
+        
+        // Clear the busy bit to wakeup dependent instructions in the Integer Queue
+        next_state.BusyBitTable[instruction.DestRegister] = false;
+
+        // Mark the instruction as "Done" in the Active List (ROB) so it can commit later
+        for (auto& al_entry : next_state.ActiveList) {
+            if (al_entry.PC == instruction.PC) {
+                al_entry.Done = true;
+                break;
+            }
+        }
+    }
 }
