@@ -5,9 +5,10 @@
 #include <vector>
 #include <string>
 
-int main() {
+int main(int argc, char* argv[]) {
     // Load the program instructions from the input JSON file
-    std::vector<std::string> instructionStrings = loadProgram("input.json");
+    std::string inputFile = (argc > 1) ? argv[1] : "input.json";
+    std::vector<std::string> instructionStrings = loadProgram(inputFile);
     
     // Parse the instruction strings into ParsedInstruction structs
     std::vector<ParsedInstruction> instructions;
@@ -42,7 +43,8 @@ int main() {
 
     }
     // save the output JSON log
-    saveSimulationLog(simulationLog, "output.json");
+    std::string outputFile = (argc > 2) ? argv[2] : "output.json";
+    saveSimulationLog(simulationLog, outputFile);
 
 
 }
