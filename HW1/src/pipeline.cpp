@@ -191,10 +191,10 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
 
 void issue(SystemState& current_state, SystemState& next_state) {
     // Implementation for issue stage
-    updateIntegerQueue(current_state, next_state);
+    updateIntegerQueue(next_state);
 }
 
-void updateIntegerQueue(SystemState& current_state, SystemState& next_state) {
+void updateIntegerQueue(SystemState& next_state) {
     // Implementation for updating the Integer Queue (we are considering forwarding paths also here)
     for (auto& instruction : next_state.IntegerQueue) {
         if (!instruction.OpAIsReady) {
