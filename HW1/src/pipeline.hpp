@@ -21,3 +21,4 @@ void execute(SystemState& current_state, SystemState& next_state);
 void handle_exception_recovery(SystemState& current_state, SystemState& next_state);
 void instruction_commit(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction);
 void instruction_exception(SystemState& current_state, SystemState& next_state, ActiveListEntry& examined_instruction);
+void updateIntegerQueue(SystemState& current_state, SystemState& next_state);

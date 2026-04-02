@@ -191,6 +191,7 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
 
 void issue(SystemState& current_state, SystemState& next_state) {
     // Implementation for issue stage
+    
 }
 
 void execute(SystemState& current_state, SystemState& next_state) {
