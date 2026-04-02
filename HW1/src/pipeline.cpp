@@ -191,7 +191,25 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
 
 void issue(SystemState& current_state, SystemState& next_state) {
     // Implementation for issue stage
-    
+    updateIntegerQueue(current_state, next_state);
+}
+
+void updateIntegerQueue(SystemState& current_state, SystemState& next_state) {
+    // Implementation for updating the Integer Queue (we are considering forwarding paths also here)
+    for (auto& instruction : next_state.IntegerQueue) {
+        if (!instruction.OpAIsReady) {
+            if (!next_state.BusyBitTable[instruction.OpARegTag]) {
+                instruction.OpAIsReady = true;
+                instruction.OpAValue = next_state.PhysicalRegisterFile[instruction.OpARegTag];
+            }
+        }
+        if (!instruction.OpBIsReady) {
+            if (!next_state.BusyBitTable[instruction.OpBRegTag]) {
+                instruction.OpBIsReady = true;
+                instruction.OpBValue = next_state.PhysicalRegisterFile[instruction.OpBRegTag];
+            }
+        }
+    }
 }
 
 void execute(SystemState& current_state, SystemState& next_state) {
