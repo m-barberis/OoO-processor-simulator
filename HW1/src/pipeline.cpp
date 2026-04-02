@@ -19,8 +19,9 @@ void propagate(SystemState& current_state) {
 }
 
 
-void latch(SystemState& state) {
+void latch(SystemState& current_state, SystemState& next_state) {
     // Implementation for advancing clock and latching new state
+    current_state = next_state;
 }
 
 bool noInstruction(SystemState& state) {
