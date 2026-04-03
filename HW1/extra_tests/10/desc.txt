@@ -1,0 +1,1 @@
+Single divu x0,x0,x0 — minimal exception: 1 AL entry, 1 recovery drain cycle.

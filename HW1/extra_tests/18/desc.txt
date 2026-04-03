@@ -1,0 +1,1 @@
+Complex arithmetic chain (mulu, divu, sub) then a divu-by-zero exception — tests RMT/FreeList restoration and that exception busy bit is not cleared.

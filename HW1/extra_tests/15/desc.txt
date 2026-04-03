@@ -1,0 +1,1 @@
+WAW hazard — 8 consecutive writes to x1; tests physical register allocation churn and FreeList management on commit.

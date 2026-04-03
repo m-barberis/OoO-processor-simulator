@@ -1,0 +1,1 @@
+Negative addi immediates — tests sign-extension of immediate operands to uint64.

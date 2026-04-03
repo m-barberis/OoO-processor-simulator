@@ -1,0 +1,1 @@
+Two exception-eligible instructions dispatched together — only the architecturally first (divu) should be the exception; remu is flushed.

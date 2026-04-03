@@ -1,0 +1,1 @@
+Large in-flight AL (20 instructions) when exception fires — recovery takes 5+ drain cycles.
