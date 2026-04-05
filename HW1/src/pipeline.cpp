@@ -88,7 +88,8 @@ void handle_exception_recovery(SystemState& current_state, SystemState& next_sta
             // Unroll instructions in reverse program order (newest first = back of the Active List)
             ActiveListEntry instruction = next_state.ActiveList.back();
             
-            // Get the physical register that this instruction allocated
+            // The current RMT entry for this logical destination is the physical register
+            // allocated by this instruction, because we roll back from newest to oldest.
             int current_inst_physical_destination = next_state.RegisterMapTable[instruction.LogicalDestination];
             
             // Free the physical register that was allocated by this instruction
@@ -121,7 +122,7 @@ void fetch_and_decode(SystemState& current_state, SystemState& next_state) {
         next_state.PC = 0x10000; // Set the PC to 0x10000 (65536) to jump to the exception handler
         next_state.DecodedInstructionQueue.clear(); // Clear the Decoded Instruction Queue in the next state
     }
-    else if (current_state.backpressure_on == true) {
+    else if (next_state.backpressure_on == true) {
         // Do nothing, wait for the backpressure to be released
     }
     else {
@@ -152,15 +153,24 @@ void fetch_and_decode(SystemState& current_state, SystemState& next_state) {
 void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
     if (next_state.Exception) return;
     // Implementation for rename and dispatch stage
-    bool backpressure_on = (next_state.ActiveList.size() > 28 || next_state.FreeList.size() < 4 || next_state.IntegerQueue.size() > 28); // Check if backpressure should be applied based on the specified conditions
+    int decodedCount = static_cast<int>(current_state.DecodedInstructionQueue.size()); // Number of instructions currently in the DIR buffer (Decoded Instruction Queue)
+    int availableAL = 32 - static_cast<int>(next_state.ActiveList.size()); // Available entries in the Active List
+    int availableIQ = 32 - static_cast<int>(next_state.IntegerQueue.size()); // Available entries in the Integer Queue
+
+    // Check if we can dispatch the entire bundle of decoded instructions this cycle (atomic dispatch)
+    bool canDispatchBundle = (decodedCount == 0) ||
+        (static_cast<int>(next_state.FreeList.size()) >= decodedCount &&
+         availableAL >= decodedCount &&
+         availableIQ >= decodedCount);
+    bool backpressure_on = (decodedCount > 0) && !canDispatchBundle;
     next_state.backpressure_on = backpressure_on;
 
     if (backpressure_on == true) {
         // Do nothing, wait for the backpressure to be released
     }
     else {
-        // Dispatch up to 4 instructions from the Decoded Instruction Queue
-        int instructionsToDispatch = std::min(4, static_cast<int>(current_state.DecodedInstructionQueue.size()));
+        // Dispatch atomically: either all decoded instructions this cycle or none.
+        int instructionsToDispatch = decodedCount;
         
         // Remove processed instructions from next_state's queue
         next_state.DecodedInstructionQueue.erase(
@@ -175,11 +185,6 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
 
             decoded_instruction.OpCode = parsed_instruction.opcode;
             decoded_instruction.PC = di.PC;
-
-            if (next_state.FreeList.empty()) {
-                // If there are no free physical registers, we cannot dispatch more instructions
-                break;
-            }
             decoded_instruction.DestRegister = next_state.FreeList.front(); // Get a physical register from the Free List for the destination
 
             next_state.FreeList.erase(next_state.FreeList.begin()); // Remove the allocated physical register from the Free List
@@ -193,6 +198,7 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
             } else {
                 decoded_instruction.OpAIsReady = true; // Operand A is ready if the corresponding physical register is not busy
                 decoded_instruction.OpAValue = next_state.PhysicalRegisterFile[decoded_instruction.OpARegTag]; // Get the value of operand A from the Physical Register File
+                decoded_instruction.OpARegTag = 0;
             }
 
             // Operand B
@@ -203,6 +209,7 @@ void rename_and_dispatch(SystemState& current_state, SystemState& next_state) {
                 } else {
                     decoded_instruction.OpBIsReady = true; // Operand B is ready if the corresponding physical register is not busy
                     decoded_instruction.OpBValue = next_state.PhysicalRegisterFile[decoded_instruction.OpBRegTag]; // Get the value of operand B from the Physical Register File
+                    decoded_instruction.OpBRegTag = 0;
                 }
             }
             else {
@@ -276,19 +283,20 @@ void updateIntegerQueue(SystemState& next_state) {
             if (!next_state.BusyBitTable[instruction.OpARegTag]) {
                 instruction.OpAIsReady = true;
                 instruction.OpAValue = next_state.PhysicalRegisterFile[instruction.OpARegTag];
+                instruction.OpARegTag = 0;
             }
         }
         if (!instruction.OpBIsReady) {
             if (!next_state.BusyBitTable[instruction.OpBRegTag]) {
                 instruction.OpBIsReady = true;
                 instruction.OpBValue = next_state.PhysicalRegisterFile[instruction.OpBRegTag];
+                instruction.OpBRegTag = 0;
             }
         }
     }
 }
 
 void execute(SystemState& current_state, SystemState& next_state) {
-    if (next_state.Exception) return;
     // Implementation for execute stage (has to take 2 clock cycles)
     
     // Clear next_state's ExecutionQueue because we are consuming its elements this cycle
