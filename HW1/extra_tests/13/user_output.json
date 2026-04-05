@@ -6052,7 +6052,12 @@
             true,
             true
         ],
-        "DecodedPCs": [],
+        "DecodedPCs": [
+            36,
+            37,
+            38,
+            39
+        ],
         "Exception": false,
         "ExceptionPC": 0,
         "FreeList": [],
@@ -6399,7 +6404,7 @@
                 "PC": 35
             }
         ],
-        "PC": 36,
+        "PC": 40,
         "PhysicalRegisterFile": [
             0,
             0,

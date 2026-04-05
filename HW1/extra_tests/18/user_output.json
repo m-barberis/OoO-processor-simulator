@@ -1515,7 +1515,7 @@
                 "OpARegTag": 34,
                 "OpAValue": 0,
                 "OpBIsReady": true,
-                "OpBRegTag": 35,
+                "OpBRegTag": 0,
                 "OpBValue": 3,
                 "OpCode": "divu",
                 "PC": 4
@@ -1526,7 +1526,7 @@
                 "OpARegTag": 36,
                 "OpAValue": 0,
                 "OpBIsReady": true,
-                "OpBRegTag": 32,
+                "OpBRegTag": 0,
                 "OpBValue": 6,
                 "OpCode": "sub",
                 "PC": 5
@@ -1822,7 +1822,7 @@
                 "OpARegTag": 34,
                 "OpAValue": 0,
                 "OpBIsReady": true,
-                "OpBRegTag": 35,
+                "OpBRegTag": 0,
                 "OpBValue": 3,
                 "OpCode": "divu",
                 "PC": 4
@@ -1833,7 +1833,7 @@
                 "OpARegTag": 36,
                 "OpAValue": 0,
                 "OpBIsReady": true,
-                "OpBRegTag": 32,
+                "OpBRegTag": 0,
                 "OpBValue": 6,
                 "OpCode": "sub",
                 "PC": 5
@@ -2129,7 +2129,7 @@
                 "OpARegTag": 36,
                 "OpAValue": 0,
                 "OpBIsReady": true,
-                "OpBRegTag": 32,
+                "OpBRegTag": 0,
                 "OpBValue": 6,
                 "OpCode": "sub",
                 "PC": 5
@@ -2413,7 +2413,7 @@
                 "OpARegTag": 36,
                 "OpAValue": 0,
                 "OpBIsReady": true,
-                "OpBRegTag": 32,
+                "OpBRegTag": 0,
                 "OpBValue": 6,
                 "OpCode": "sub",
                 "PC": 5

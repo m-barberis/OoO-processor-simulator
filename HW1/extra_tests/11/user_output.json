@@ -533,10 +533,10 @@
             {
                 "DestRegister": 32,
                 "OpAIsReady": true,
-                "OpARegTag": 1,
+                "OpARegTag": 0,
                 "OpAValue": 0,
                 "OpBIsReady": true,
-                "OpBRegTag": 2,
+                "OpBRegTag": 0,
                 "OpBValue": 0,
                 "OpCode": "remu",
                 "PC": 0
