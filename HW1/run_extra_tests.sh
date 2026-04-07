@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # run_extra_tests.sh
 # For each extra test:
 #   1. Run the C++ simulator  -> user_output.json

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # run_tests.sh — Run a simulator against all test cases and compare outputs
 # Usage: ./run_tests.sh <path_to_run.sh>
 # Example: ./run_tests.sh ../run.sh
