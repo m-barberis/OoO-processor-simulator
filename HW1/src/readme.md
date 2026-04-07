@@ -18,7 +18,7 @@ Core data model for the simulator.
 
 - Instruction structs (`ParsedInstruction`, `DecodedInstruction`)
 - Pipeline/storage entries (`ActiveListEntry`, `IntegerQueueEntry`)
-- Global machine state (`SystemState`)
+- Global machine state (`SystemState`) updated at every cycle
 - Default initialization of register map table and free list
 
 ## `io_handler.hpp` / `io_handler.cpp`
