@@ -1185,10 +1185,10 @@
             {
                 "DestRegister": 40,
                 "OpAIsReady": true,
-                "OpARegTag": 11,
+                "OpARegTag": 0,
                 "OpAValue": 0,
                 "OpBIsReady": true,
-                "OpBRegTag": 20,
+                "OpBRegTag": 0,
                 "OpBValue": 0,
                 "OpCode": "mulu",
                 "PC": 8
@@ -1196,10 +1196,10 @@
             {
                 "DestRegister": 41,
                 "OpAIsReady": true,
-                "OpARegTag": 16,
+                "OpARegTag": 0,
                 "OpAValue": 0,
                 "OpBIsReady": true,
-                "OpBRegTag": 25,
+                "OpBRegTag": 0,
                 "OpBValue": 0,
                 "OpCode": "mulu",
                 "PC": 9
@@ -1207,10 +1207,10 @@
             {
                 "DestRegister": 42,
                 "OpAIsReady": true,
-                "OpARegTag": 18,
+                "OpARegTag": 0,
                 "OpAValue": 0,
                 "OpBIsReady": true,
-                "OpBRegTag": 19,
+                "OpBRegTag": 0,
                 "OpBValue": 0,
                 "OpCode": "sub",
                 "PC": 10
